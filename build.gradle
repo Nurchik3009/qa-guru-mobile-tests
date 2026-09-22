@@ -1,7 +1,14 @@
 plugins {
     id 'java-library'
-    id 'io.qameta.allure' version '2.11.2'
+    id 'io.qameta.allure' version '3.0.0'
 }
+
+wrapper {
+    gradleVersion = '8.13'
+}
+
+group = 'guru.qa'
+version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
@@ -9,44 +16,67 @@ repositories {
 
 def aspectjWeaverVersion = "1.9.22",
     selenideVersion = "6.13.0",
-    restAssuredVersion = "5.3.0",
-    allureVersion = "2.21.0",
-    junitVersion = "5.9.3",
-    slf4jVersion = "2.0.7"
+    restAssuredVersion = "6.0.0",
+    allureVersion = "2.32.0",
+    junitVersion = "5.14.3",
+    slf4jVersion = "2.0.17",
+    appiumVersion = "8.3.0",
+    ownerVersion = "1.0.12",
+    commonsIoVersion = "2.22.0"
 
-allure {
-    report {
-        version.set(allureVersion)
-    }
-    adapter {
-        aspectjWeaver.set(true)
-        frameworks {
-            junit5 {
-                adapterVersion.set(allureVersion)
+
+allure
+        {
+            report {
+                version.set(allureVersion)
+            }
+            adapter { // отвечает за появление папочки build/allure-results
+                aspectjWeaver.set(true) //обработка аннотации @Step
+                frameworks {
+                    junit5 { //название фреймворка
+                        adapterVersion.set(allureVersion) //версия интеграции фреймворка и Allure
+                    }
+                }
             }
         }
-    }
-}
 
 dependencies {
-    testImplementation(
-            "org.aspectj:aspectjweaver:$aspectjWeaverVersion",
-            "com.codeborne:selenide:$selenideVersion",
-            "io.qameta.allure:allure-selenide:$allureVersion",
-            "io.appium:java-client:8.3.0",
-            "io.rest-assured:rest-assured:$restAssuredVersion",
-            "org.junit.jupiter:junit-jupiter:$junitVersion",
-            "org.slf4j:slf4j-simple:$slf4jVersion"
-    )
+    testImplementation(platform("org.junit:junit-bom:${junitVersion}"))
+    // Без явной версии — возьмётся из BOM
+    testImplementation("org.junit.jupiter:junit-jupiter-api")
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
+    // Опционально: движок и лаунчер будут подхватываться через BOM
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testImplementation("org.aspectj:aspectjweaver:$aspectjWeaverVersion")
+    testImplementation("com.codeborne:selenide:$selenideVersion")
+    testImplementation("io.qameta.allure:allure-selenide:$allureVersion")
+    testImplementation("io.appium:java-client:$appiumVersion")
+    testImplementation("io.rest-assured:rest-assured:$restAssuredVersion")
+    testImplementation("org.aeonbits.owner:owner:$ownerVersion")
+    testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+    testImplementation("commons-io:commons-io:$commonsIoVersion")
+}
+
+tasks.withType(JavaCompile) {
+    // javac читает исходники в кодировке платформы, а на Windows это может быть cp1251.
+    // Без явного UTF-8 русские имена шагов Allure поедут в отчёте ещё при компиляции.
+    options.encoding = 'UTF-8'
 }
 
 tasks.withType(Test) {
     useJUnitPlatform()
+    systemProperties(System.getProperties())
 
     testLogging {
         lifecycle {
             events "started", "skipped", "failed", "standard_error", "standard_out"
-            exceptionFormat "short"
+            // short печатает только "SessionNotCreatedException at ProtocolHandshake.java:148"
+            // и прячет само сообщение, а у мобильных падений вся суть именно в нём
+            exceptionFormat "full"
+            showCauses true
+            showStackTraces true
         }
     }
 }
