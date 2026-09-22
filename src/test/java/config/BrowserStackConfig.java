@@ -3,6 +3,7 @@ package config;
 import org.aeonbits.owner.Config;
 import org.aeonbits.owner.Config.Key;
 
+@Config.LoadPolicy(Config.LoadType.MERGE)
 @Config.Sources({
         "system:properties",
         "classpath:config.properties"
