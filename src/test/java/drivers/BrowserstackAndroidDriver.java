@@ -10,6 +10,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import javax.annotation.Nonnull;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class BrowserstackAndroidDriver implements WebDriverProvider {
 
@@ -19,49 +21,47 @@ public class BrowserstackAndroidDriver implements WebDriverProvider {
 
         MutableCapabilities caps = new MutableCapabilities();
 
-        // BrowserStack credentials
-        caps.setCapability(
-                "browserstack.user",
+        // Android
+        caps.setCapability("platformName", "android");
+        caps.setCapability("deviceName", Config.browserStack.androidDeviceName());
+        caps.setCapability("platformVersion", Config.browserStack.androidOsVersion());
+        caps.setCapability("app", Config.browserStack.androidApp());
+        caps.setCapability("automationName", "UIAutomator2");
+
+        // BrowserStack
+        Map<String, Object> bstackOptions = new HashMap<>();
+
+        bstackOptions.put(
+                "userName",
                 Config.browserStack.user()
         );
 
-        caps.setCapability(
-                "browserstack.key",
+        bstackOptions.put(
+                "accessKey",
                 Config.browserStack.key()
         );
 
-        // Android device
-        caps.setCapability(
-                "device",
-                Config.browserStack.androidDeviceName()
-        );
-
-        caps.setCapability(
-                "os_version",
-                Config.browserStack.androidOsVersion()
-        );
-
-        // Application
-        caps.setCapability(
-                "app",
-                Config.browserStack.androidApp()
-        );
-
-        // BrowserStack project
-        caps.setCapability(
-                "project",
+        bstackOptions.put(
+                "projectName",
                 Config.browserStack.projectName()
         );
 
-        caps.setCapability(
-                "build",
+        bstackOptions.put(
+                "buildName",
                 Config.browserStack.buildName()
         );
 
-        caps.setCapability(
-                "name",
-                "first_test"
+        bstackOptions.put(
+                "sessionName",
+                "android_search_test"
         );
+
+        bstackOptions.put(
+                "appiumVersion",
+                Config.browserStack.appiumVersion()
+        );
+
+        caps.setCapability("bstack:options", bstackOptions);
 
         try {
             return new RemoteWebDriver(
